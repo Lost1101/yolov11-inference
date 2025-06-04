@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="./renderBox.js"></script>
+</head>
+<body>
+    <input type="file" id="imageInput" accept="image/*" onchange="uploadImage()"> <!-- Memicu uploadImage saat file dipilih -->
+    <div id="imagePreview" style="margin-top: 20px; position: relative;">
+        <img id="previewImg" src="" alt="Selected Image" width="640" height="640">
+        <canvas id="canvas" width="640" height="640" style=" position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+    </div>
+
+    <div id="result" style="margin-top: 20px;">
+        <h2>Detection Result:</h2>
+        <pre id="resultData" style="background: #f4f4f4; padding: 10px;"></pre>
+    </div>
+
+    <script>
+        async function uploadImage() {
+            const fileInput = document.getElementById('imageInput'); // Ubah ke 'imageInput'
+            const resultContainer = document.getElementById('resultData');
+            const previewImg = document.getElementById('previewImg');
+            const canvas = document.getElementById('canvas');
+
+            if (!fileInput.files[0]) {
+                alert("Please select an image!");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("image", fileInput.files[0]);
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                previewImg.src = e.target.result; // Set URL gambar ke elemen <img>
+                previewImg.style.display = 'block'; // Tampilkan elemen <img>
+            };
+
+            // Baca file sebagai Data URL
+            reader.readAsDataURL(file);
+
+            try {
+                const response = await fetch('http://localhost:4040/upload-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                let result = await response.json();
+                console.log("Detection Result:", result);
+                resultContainer.textContent = JSON.stringify(result, null, 2);
+                let result_array = result.detections;
+                renderBoxes(canvas, result_array);
+            } catch (error) {
+                console.error("Error uploading image:", error);
+            }
+        }
+    </script>
+</body>
+</html>
